@@ -1,0 +1,6 @@
+Pillow
+Flask
+uwsgi
+boto3
+lxml==3.5.0
+reportlab==3.3.0
