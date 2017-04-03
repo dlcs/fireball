@@ -19,6 +19,7 @@ from boto.s3.key import Key
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
+from reportlab.rl_config import defaultPageSize
 
 from PyPDF2 import PdfFileMerger
 
@@ -63,7 +64,7 @@ def generate():
 
     # generate pdf from the rest of the pages
 
-    images_to_download = []
+    pages_to_download = []
     playbook = []
 
     # skip first page
@@ -73,7 +74,7 @@ def generate():
         page["id"] = str(uuid.uuid4())
         playbook.append(page)
         if page["type"] == "jpg" and page["method"] == "s3":
-            images_to_download.append(page)
+            pages_to_download.append(page)
             logging.debug("adding %s to list of images to download", page["input"])
         elif page["type"] in custom_types:
             # found custom type
@@ -82,9 +83,31 @@ def generate():
             logging.error("unknown page type %s", page["type"])
             return "unknown page type %s", page["type"]
 
-    parallel_fetch(s3Connection, images_to_download, session_folder)
+    parallel_fetch(s3Connection, pages_to_download, session_folder)
 
-    #pdf = Canvas(pageCompression=1)
+    logging.debug("creating pdf")
+
+    pdf = Canvas(workfile, pageCompression=1)
+
+    pages_iterator = iter(pages)
+    next(pages_iterator)
+    for page in pages_iterator:
+        if page in pages_to_download:
+            downloaded_file = session_folder + "/" + page["input"]
+            if file_exists(downloaded_file):
+                if pdf_append_image(pdf, downloaded_file):
+                    # all good
+                    pass
+                else:
+                    # problem
+                    return jsonify({ "success": False, "message": "problem with image"}) 
+            else:
+                # missing
+                pdf_append_custom(pdf, custom_types["missing"])
+        elif page["type"] == "redacted":
+            pdf_append_custom(pdf, custom_types["redacted"])
+        
+    pdf.save()
 
     #write_file_to_s3(workfile, output, "application/pdf")
 
@@ -137,7 +160,40 @@ def generate_general_case():
 
     if output_method == "s3":
         write_file_to_s3(workfile, output, "application/pdf")
+# gotta keep 'em separated
 
+def pdf_append_custom(pdf, custom_type):
+    """example docstring"""
+
+    page_width  = defaultPageSize[0]
+    page_height = defaultPageSize[1]
+
+    text = custom_type["message"]
+    text_width = stringWidth(text)
+    y = page_height * 0.3
+    pdf_text_object = canvas.beginText((PAGE_WIDTH - text_width) / 2.0, y)
+    pdf_text_object.textOut(text)
+
+def pdf_append_image(pdf, filename):
+    """example docstring"""
+    try:
+        image = Image.open(downloaded_file)
+        image_width, image_height = image.size
+        try:
+            dpi = image.info['dpi'][0]
+        except KeyError:
+            pass
+        width = image_width * 72 / dpi
+        height = image_height * 72 / dpi
+        pdf.setPageSize((width, height))
+        pdf.drawImage(image, 0, 0, width=width, height=height)
+        add_text_layer(pdf, image, height, dpi)
+        pdf.showPage()
+    except Exception as append_exception:
+        logging.exception("problem during append to pdf of %s: %s", filename, str(append_exception)))
+        return False
+    return True
+  
 def write_file_to_s3(workfile, output, mime_type):
     """example docstring"""
     logging.debug("write_file_to_s3")
