@@ -10,102 +10,102 @@
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/391fb5ab-6092-429f-9b91-e4c74de4c24a/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/391fb5ab-6092-429f-9b91-e4c74de4c24a/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/412c3b23-725a-4b16-b83b-09d89b67666c/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/412c3b23-725a-4b16-b83b-09d89b67666c/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/4cfd8775-780c-4177-9dec-1e8724fa5e34/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/4cfd8775-780c-4177-9dec-1e8724fa5e34/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/635b07dd-5333-4642-9d2b-11af033378fc/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/635b07dd-5333-4642-9d2b-11af033378fc/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/cbd4ec4f-ea81-4fdb-9a57-78ae2ea760bd/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/cbd4ec4f-ea81-4fdb-9a57-78ae2ea760bd/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/cb091f3e-3e66-47bd-84c7-e327bf8df609/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/cb091f3e-3e66-47bd-84c7-e327bf8df609/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/aa4f011b-95bc-4873-8a2d-96b00f072b88/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/aa4f011b-95bc-4873-8a2d-96b00f072b88/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/2682671b-f0f9-46a0-800d-1d906198dd32/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/2682671b-f0f9-46a0-800d-1d906198dd32/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/cdca16b7-365c-46ea-abe2-cd5bdbbd860c/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/cdca16b7-365c-46ea-abe2-cd5bdbbd860c/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/04bb906c-50f5-4c3e-b232-e78e5fff9f73/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/04bb906c-50f5-4c3e-b232-e78e5fff9f73/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/db0ee942-d49d-452a-a3ae-363f548927cf/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/db0ee942-d49d-452a-a3ae-363f548927cf/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/926ef834-1ac1-4041-b91c-59c7e575995a/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/926ef834-1ac1-4041-b91c-59c7e575995a/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/71b3d5e4-28fd-4f13-8df0-9c634bcf8faa/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/71b3d5e4-28fd-4f13-8df0-9c634bcf8faa/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/4367efd4-6f15-43d2-9da4-fed324eba8f5/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/4367efd4-6f15-43d2-9da4-fed324eba8f5/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/8eda2979-f849-4609-89b3-d7a930b0ba03/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/8eda2979-f849-4609-89b3-d7a930b0ba03/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/c03eeba1-c5dc-460e-89a3-f3e4d59965cc/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/c03eeba1-c5dc-460e-89a3-f3e4d59965cc/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/6d650e0f-00c1-43b2-ab44-4465f915fe18/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/6d650e0f-00c1-43b2-ab44-4465f915fe18/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/e22efa0b-c2bd-48ba-b4f2-0195d3516abd/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/e22efa0b-c2bd-48ba-b4f2-0195d3516abd/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/28140ba8-373e-4773-8ae6-c21fc75ff95d/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/28140ba8-373e-4773-8ae6-c21fc75ff95d/low.jpg"
         },
         {
             "type": "jpg",
             "method": "s3",
-            "input": "s3://dlcs-storage/2/1/fd93478a-b4e3-46e4-a603-1cc5992129f3/low.jpg"
+            "input": "s3://dlcs-thumbs/2/1/fd93478a-b4e3-46e4-a603-1cc5992129f3/low.jpg"
         },
         {
             "type": "redacted"
