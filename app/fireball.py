@@ -52,11 +52,11 @@ def generate():
         download_success = download(cover_page["input"], cover_page_filename)
     else:
         logging.error("cover page was invalid")
-        return
+        return "cover page was invalid"
 
     if download_success != True:
         logging.error("problem during download")
-        return
+        return "problem during download"
 
     # generate pdf from the rest of the pages
 
@@ -77,7 +77,7 @@ def generate():
             logging.debug("found custom type %s", page["type"])
         else:
             logging.error("unknown page type %s", page["type"])
-            return
+            return "unknown page type %s", page["type"]
 
     parallel_fetch(images_to_download, session_folder)
 
