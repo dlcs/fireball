@@ -17,6 +17,7 @@ from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 
 from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.rl_config import defaultPageSize
@@ -94,7 +95,7 @@ def generate():
     for page in pages_iterator:
         if page in pages_to_download:
             downloaded_file = session_folder + "/" + page["input"]
-            if file_exists(downloaded_file):
+            if os.path.exists(downloaded_file):
                 if pdf_append_image(pdf, downloaded_file):
                     # all good
                     pass
@@ -165,19 +166,20 @@ def generate_general_case():
 def pdf_append_custom(pdf, custom_type):
     """example docstring"""
 
-    page_width  = defaultPageSize[0]
+    page_width = defaultPageSize[0]
     page_height = defaultPageSize[1]
 
     text = custom_type["message"]
     text_width = stringWidth(text)
-    y = page_height * 0.3
-    pdf_text_object = canvas.beginText((PAGE_WIDTH - text_width) / 2.0, y)
+    text_start_y = page_height * 0.3
+    pdf_text_object = pdf.beginText((page_width - text_width) / 2.0, text_start_y)
     pdf_text_object.textOut(text)
+    pdf.showPage()
 
 def pdf_append_image(pdf, filename):
     """example docstring"""
     try:
-        image = Image.open(downloaded_file)
+        image = Image.open(filename)
         image_width, image_height = image.size
         try:
             dpi = image.info['dpi'][0]
@@ -187,10 +189,9 @@ def pdf_append_image(pdf, filename):
         height = image_height * 72 / dpi
         pdf.setPageSize((width, height))
         pdf.drawImage(image, 0, 0, width=width, height=height)
-        add_text_layer(pdf, image, height, dpi)
         pdf.showPage()
     except Exception as append_exception:
-        logging.exception("problem during append to pdf of %s: %s", filename, str(append_exception)))
+        logging.exception("problem during append to pdf of %s: %s", filename, str(append_exception))
         return False
     return True
   
