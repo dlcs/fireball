@@ -116,7 +116,7 @@ def generate():
 
     pdf.save()
 
-    #write_file_to_s3(workfile, output, "application/pdf")
+    write_file_to_s3(workfile, output, "application/pdf")
 
     response_data = {
         "success": True
@@ -172,12 +172,21 @@ def generate_general_case():
 def pdf_append_custom(pdf, custom_type):
     """example docstring"""
 
+    logging.debug("appending custom to pdf")
+
     page_width = defaultPageSize[0]
     page_height = defaultPageSize[1]
+    logging.debug("page size = %d x %d", page_width, page_height)
 
     text = custom_type["message"]
+    logging.debug("message = %s", text)
+
     text_width = stringWidth(text, 'Helvetica', 10)
+    logging.debug("text_width = %d", text_width)
+    
     text_start_y = page_height * 0.3
+    logging.debug("text_start_y = %d", text_start_y)
+
     pdf_text_object = pdf.beginText((page_width - text_width) / 2.0, text_start_y)
     pdf_text_object.textOut(text)
     pdf.showPage()
