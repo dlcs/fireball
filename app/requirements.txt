@@ -2,6 +2,5 @@ Pillow
 Flask
 uwsgi
 boto
-lxml==3.5.0
-reportlab==3.3.0
+reportlab
 PyPDF2
