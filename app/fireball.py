@@ -10,8 +10,6 @@ import requests
 import uuid
 import concurrent.futures
 
-from collections import namedtuple
-
 from flask import Flask, request, jsonify
 
 from boto.s3.connection import S3Connection
@@ -26,7 +24,6 @@ from PyPDF2 import PdfFileMerger
 from PIL import Image
 
 app = Flask(__name__)
-Page_Tuple = namedtuple('id', 'page')
 
 def main():
     app.run(threaded=True, debug=True, port=5000, host='0.0.0.0')
@@ -70,10 +67,10 @@ def generate():
     pages_iterator = iter(pages)
     next(pages_iterator)
     for page in pages_iterator:
-        page_tuple = Page_Tuple(str(uuid.uuid4()), page)
-        playbook.append(page_tuple)
+        page["id"] = str(uuid.uuid4())
+        playbook.append(page)
         if page["type"] == "jpg" and page["method"] == "s3":
-            images_to_download.append(page_tuple)
+            images_to_download.append(page)
             logging.debug("adding %s to list of images to download", page["source"])
         elif hasattr(custom_types, page["type"]):
             # found custom type
@@ -159,8 +156,8 @@ def parallel_fetch(download_list, base_folder):
     succeeded = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=settings.DOWNLOAD_POOL_SIZE) as executor:
         futures = {
-            executor.submit(fetch, base_folder, page_tuple):
-                page_tuple for page_tuple in download_list
+            executor.submit(fetch, base_folder, page):
+                page for page in download_list
         }
         for future in concurrent.futures.as_completed(futures):
             if future.result():
@@ -168,11 +165,11 @@ def parallel_fetch(download_list, base_folder):
 
     return download_list.count == succeeded
 
-def fetch(base_folder, page_tuple):
+def fetch(base_folder, page):
     """example docstring"""
-    target_filename = base_folder + "/" + page_tuple.id
-    logging.debug("fetching %s to %s", page_tuple.page["input"], target_filename)
-    return download(page_tuple.page["input"], target_filename)
+    target_filename = base_folder + "/" + page["id"]
+    logging.debug("fetching %s to %s", page["input"], target_filename)
+    return download(page["input"], target_filename)
 
 def download(url, filename):
     """example docstring"""
