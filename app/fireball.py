@@ -30,7 +30,7 @@ Page_Tuple = namedtuple('id', 'page')
 def main():
     app.run(threaded=True, debug=True, port=5000, host='0.0.0.0')
 
-@app.route('/pdf/', methods=['POST'])
+@app.route('/pdf', methods=['POST'])
 def generate():
     """example docstring"""
     request_data = request.get_json()
