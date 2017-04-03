@@ -9,9 +9,9 @@ import settings
 import urllib
 import uuid
 import concurrent.futures
+import urllib
+
 from collections import namedtuple
-from urllib.request import urlretrieve
-from urllib.error import URLError, HTTPError
 
 from flask import Flask, request, jsonify
 
