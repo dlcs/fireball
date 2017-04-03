@@ -71,7 +71,7 @@ def generate():
         playbook.append(page)
         if page["type"] == "jpg" and page["method"] == "s3":
             images_to_download.append(page)
-            logging.debug("adding %s to list of images to download", page["source"])
+            logging.debug("adding %s to list of images to download", page["input"])
         elif hasattr(custom_types, page["type"]):
             # found custom type
             logging.debug("found custom type %s", page["type"])
