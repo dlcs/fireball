@@ -202,7 +202,7 @@ def pdf_append_image(pdf, filename):
         pdf.setPageSize((width, height))
         logging.debug("page size = %d x %d", width, height)
 
-        pdf.drawImage(image, 0, 0, width=width, height=height)
+        pdf.drawImage(filename, 0, 0, width=width, height=height)
 
         pdf.showPage()
     except Exception as append_exception:
