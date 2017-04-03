@@ -94,7 +94,7 @@ def generate():
     next(pages_iterator)
     for page in pages_iterator:
         if page in pages_to_download:
-            downloaded_file = session_folder + "/" + page["input"]
+            downloaded_file = session_folder + "/" + page["id"]
             logging.debug("checking file %s", downloaded_file)
             if os.path.exists(downloaded_file):
                 logging.debug("downloaded file exists")
@@ -113,7 +113,7 @@ def generate():
         elif page["type"] == "redacted":
             pdf_append_custom(pdf, custom_types["redacted"])
             logging.debug("image was redacted")
-            
+
     pdf.save()
 
     #write_file_to_s3(workfile, output, "application/pdf")
