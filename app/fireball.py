@@ -9,7 +9,6 @@ import settings
 import urllib
 import uuid
 import concurrent.futures
-import urllib
 
 from collections import namedtuple
 
@@ -180,7 +179,7 @@ def download(url, filename):
     try:
         urllib.request.urlretrieve(url, filename)
         return True
-    except urllib.error.URLError:
+    except urllib.request.URLError:
         logging.exception("problem during download of %s to %s", url, filename)
     return False
 
