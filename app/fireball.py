@@ -33,11 +33,11 @@ def main():
 @app.route('/pdf', methods=['POST'])
 def generate():
     """example docstring"""
-    request_data = request.json()
+    request_data = request.json
 
-    output = request_data.get("output")
-    pages = request_data.get("pages")
-    custom_types = request_data.get("customTypes")
+    output = request_data["output"]
+    pages = request_data["pages"]
+    custom_types = request_data["customTypes"]
 
     session_folder = make_session_folder()
 
