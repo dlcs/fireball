@@ -4,3 +4,4 @@ uwsgi
 boto
 reportlab
 PyPDF2
+futures
