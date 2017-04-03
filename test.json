@@ -1,6 +1,6 @@
 {
     "method": "s3",
-    "output": "s3://dlcs-pdf/2/1/pdf-item/b17564980/0/result.pdf",
+    "output": "s3://dlcs-pdf/test.pdf",
     "pages": [
         {
             "type": "pdf",
