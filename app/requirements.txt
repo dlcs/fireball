@@ -2,7 +2,7 @@ Pillow
 Flask
 uwsgi
 boto
-reportlab
+reportlab==3.3.0
 PyPDF2
 futures
 requests
