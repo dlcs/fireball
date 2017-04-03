@@ -1,5 +1,5 @@
 import io
-import os.path
+import os
 import sys
 import json
 import logging
@@ -25,6 +25,7 @@ from PyPDF2 import PdfFileMerger
 from PIL import Image
 
 app = Flask(__name__)
+Page_Tuple = namedtuple('id', 'page')
 
 def main():
     app.run(threaded=True, debug=True, port=5000, host='0.0.0.0')
@@ -38,7 +39,7 @@ def generate():
     pages = request_data.get("pages")
     custom_types = request_data.get("customTypes")
 
-    session_folder = settings.WORK_FOLDER + "/" + str(uuid.uuid4())
+    session_folder = make_session_folder()
 
     (fd, workfile) = tempfile.mkstemp(prefix=session_folder)
 
@@ -63,8 +64,6 @@ def generate():
 
     images_to_download = []
     playbook = []
-
-    Page_Tuple = namedtuple('id', 'page')
 
     # skip first page
     pages_iterator = iter(pages)
@@ -136,6 +135,15 @@ def generate_general_case():
 def write_file_to_s3(workfile, output, mime_type):
     """example docstring"""
     logging.debug("write_file_to_s3")
+
+def make_session_folder():
+    """example docstring"""
+    session_folder = settings.WORK_FOLDER + "/" + str(uuid.uuid4())
+    try:
+        os.stat(session_folder)
+    except os.error:
+        os.mkdir(session_folder)
+    return session_folder
 
 def parallel_fetch(download_list, base_folder):
     """example docstring"""
