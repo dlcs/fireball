@@ -1,6 +1,7 @@
 Pillow
 Flask
 uwsgi
-boto3
+boto
 lxml==3.5.0
 reportlab==3.3.0
+PyPDF2

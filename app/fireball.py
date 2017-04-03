@@ -4,7 +4,12 @@ import sys
 import json
 import logging
 import subprocess
+import tempfile
 import settings
+import urllib
+import uuid
+import concurrent.futures
+from collections import namedtuple
 
 from flask import Flask, request, jsonify
 
@@ -15,17 +20,78 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 
+from PyPDF2 import PdfFileMerger
+
 from PIL import Image
 
 app = Flask(__name__)
 
-S3CONNECTION = get_s3_connection()
+s3Connection = get_s3_connection()
 
 def main():
     app.run(threaded=True, debug=True, port=5000, host='0.0.0.0')
 
 @app.route('/pdf/', methods=['POST'])
 def generate():
+    """example docstring"""
+    request_data = request.get_json()
+
+    output = request_data.get("output")
+    pages = request_data.get("pages")
+    custom_types = request_data.get("customTypes")
+
+    session_folder = settings.WORK_FOLDER
+
+    (fd, workfile) = tempfile.mkstemp(prefix=session_folder)
+
+    logging.info("generate will use workfile %s", workfile)
+
+    # load the cover pdf for the first page
+    cover_page = pages[0]
+    (cover_page_fd, cover_page_filename) = tempfile.mkstemp(prefix=session_folder)
+
+    download_success = False
+    if cover_page.type == "pdf" and cover_page.method == "download":
+        download_success = download(cover_page.input, cover_page_filename)
+    else:
+        logging.error("cover page was invalid")
+        return
+
+    if download_success != True:
+        logging.error("problem during download")
+        return
+
+    # generate pdf from the rest of the pages
+
+    images_to_download = []
+    playbook = []
+
+    Page_Tuple = namedtuple('id', 'page')
+
+    # skip first page
+    pages_iterator = iter(pages)
+    next(pages_iterator)
+    for page in pages_iterator:
+        page_tuple = Page_Tuple(uuid.uuid4(), page)
+        playbook.append(page_tuple)
+        if page.type == "jpg" and page.method == "s3":
+            images_to_download.append(page_tuple)
+            logging.debug("adding %s to list of images to download", page.source)
+        elif hasattr(custom_types, page.type):
+            # found custom type
+            logging.debug("found custom type %s", page.type)
+        else:
+            logging.error("unknown page type %s", page.type)
+            return
+
+    parallel_fetch(images_to_download, session_folder)
+
+    #pdf = Canvas(pageCompression=1)
+
+    #write_file_to_s3(workfile, output, "application/pdf")
+
+@app.route('/general-case/', methods=['POST'])
+def generate_general_case():
     request_data = request.get_json()
 
     output_method = request_data.get("method")
@@ -68,14 +134,46 @@ def generate():
         write_file_to_s3(workfile, output, "application/pdf")
 
 def write_file_to_s3(workfile, output, mime_type):
+    """example docstring"""
     logging.debug("write_file_to_s3")
 
+def parallel_fetch(download_list, base_folder):
+    """example docstring"""
+
+    succeeded = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=settings.DOWNLOAD_POOL_SIZE) as executor:
+        futures = { \
+            executor.submit(fetch, base_folder, page_tuple): \
+                page_tuple for page_tuple in download_list}
+        for future in concurrent.futures.as_completed(futures):
+            if future.result():
+                succeeded += 1
+
+    return download_list.count == succeeded
+
+def fetch(base_folder, page_tuple):
+    """example docstring"""
+    target_filename = base_folder + "/" + page_tuple.id
+    logging.debug("fetching %s to %s", page_tuple.page.input, target_filename)
+    return download(page_tuple.page.input, target_filename)
+
+def download(url, filename):
+    """example docstring"""
+    try:
+        urllib.request.urlretrieve(url, filename)
+        return True
+    except urllib.error.URLError:
+        logging.exception("problem during download of %s to %s", url, filename)
+    return False
+
 def get_s3_connection():
-    return S3Connection( \
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID, \
+    """example docstring"""
+    return S3Connection(
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
 def setup_logging():
+    """example docstring"""
     logging.basicConfig(filename="fireball.log",
                         filemode='a',
                         level=logging.DEBUG,
