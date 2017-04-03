@@ -88,26 +88,32 @@ def generate():
 
     logging.debug("creating pdf")
 
-    pdf = Canvas(workfile, pageCompression=1)
+    pdf = Canvas(workfile)
 
     pages_iterator = iter(pages)
     next(pages_iterator)
     for page in pages_iterator:
         if page in pages_to_download:
             downloaded_file = session_folder + "/" + page["input"]
+            logging.debug("checking file %s", downloaded_file)
             if os.path.exists(downloaded_file):
+                logging.debug("downloaded file exists")
                 if pdf_append_image(pdf, downloaded_file):
+                    logging.debug("appended image")
                     # all good
                     pass
                 else:
                     # problem
+                    logging.debug("problem appending image")
                     return jsonify({"success": False, "message": "problem with image"})
             else:
                 # missing
                 pdf_append_custom(pdf, custom_types["missing"])
+                logging.debug("image was missing")
         elif page["type"] == "redacted":
             pdf_append_custom(pdf, custom_types["redacted"])
-
+            logging.debug("image was redacted")
+            
     pdf.save()
 
     #write_file_to_s3(workfile, output, "application/pdf")
@@ -180,16 +186,24 @@ def pdf_append_image(pdf, filename):
     """example docstring"""
     dpi = settings.DEFAULT_DPI
     try:
+        logging.debug("appending image %s", filename)
         image = Image.open(filename)
         image_width, image_height = image.size
+        logging.debug("image size = %d x %d", image_width, image_height)
+
         try:
             dpi = image.info['dpi'][0]
         except KeyError:
             pass
+        logging.debug("using dpi of %d", dpi)
+
         width = image_width * 72 / dpi
         height = image_height * 72 / dpi
         pdf.setPageSize((width, height))
+        logging.debug("page size = %d x %d", width, height)
+
         pdf.drawImage(image, 0, 0, width=width, height=height)
+
         pdf.showPage()
     except Exception as append_exception:
         logging.exception("problem during append to pdf of %s: %s", filename, str(append_exception))
