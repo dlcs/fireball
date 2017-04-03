@@ -194,7 +194,7 @@ def setup_logging():
                         format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', )
     logging.getLogger('boto').setLevel(logging.ERROR)
     logging.getLogger('botocore').setLevel(logging.ERROR)
-    logging.getLogger('wekzeug').setLevel(logging.DEBUG)
+    logging.getLogger('werkzeug').setLevel(logging.DEBUG)
 
 if __name__ == "__main__":
     setup_logging()
