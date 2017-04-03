@@ -178,6 +178,7 @@ def pdf_append_custom(pdf, custom_type):
 
 def pdf_append_image(pdf, filename):
     """example docstring"""
+    dpi = settings.DEFAULT_DPI
     try:
         image = Image.open(filename)
         image_width, image_height = image.size
