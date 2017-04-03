@@ -33,7 +33,7 @@ def main():
 @app.route('/pdf', methods=['POST'])
 def generate():
     """example docstring"""
-    request_data = request.get_json()
+    request_data = request.json()
 
     output = request_data.get("output")
     pages = request_data.get("pages")
@@ -97,6 +97,7 @@ def generate():
 
 @app.route('/general-case/', methods=['POST'])
 def generate_general_case():
+    """example docstring"""
     request_data = request.get_json()
 
     output_method = request_data.get("method")
@@ -156,9 +157,10 @@ def parallel_fetch(download_list, base_folder):
 
     succeeded = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=settings.DOWNLOAD_POOL_SIZE) as executor:
-        futures = { \
-            executor.submit(fetch, base_folder, page_tuple): \
-                page_tuple for page_tuple in download_list}
+        futures = {
+            executor.submit(fetch, base_folder, page_tuple):
+                page_tuple for page_tuple in download_list
+        }
         for future in concurrent.futures.as_completed(futures):
             if future.result():
                 succeeded += 1
