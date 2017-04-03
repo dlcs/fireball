@@ -26,8 +26,6 @@ from PIL import Image
 
 app = Flask(__name__)
 
-s3Connection = get_s3_connection()
-
 def main():
     app.run(threaded=True, debug=True, port=5000, host='0.0.0.0')
 
@@ -40,7 +38,7 @@ def generate():
     pages = request_data.get("pages")
     custom_types = request_data.get("customTypes")
 
-    session_folder = settings.WORK_FOLDER
+    session_folder = settings.WORK_FOLDER + "/" + str(uuid.uuid4())
 
     (fd, workfile) = tempfile.mkstemp(prefix=session_folder)
 
@@ -72,7 +70,7 @@ def generate():
     pages_iterator = iter(pages)
     next(pages_iterator)
     for page in pages_iterator:
-        page_tuple = Page_Tuple(uuid.uuid4(), page)
+        page_tuple = Page_Tuple(str(uuid.uuid4()), page)
         playbook.append(page_tuple)
         if page.type == "jpg" and page.method == "s3":
             images_to_download.append(page_tuple)
@@ -87,6 +85,8 @@ def generate():
     parallel_fetch(images_to_download, session_folder)
 
     #pdf = Canvas(pageCompression=1)
+
+    #s3Connection = get_s3_connection()
 
     #write_file_to_s3(workfile, output, "application/pdf")
 
