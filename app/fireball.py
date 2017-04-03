@@ -89,6 +89,12 @@ def generate():
 
     #write_file_to_s3(workfile, output, "application/pdf")
 
+    response_data = {
+        "success": True
+    }
+
+    return jsonify(response_data)
+
 @app.route('/general-case/', methods=['POST'])
 def generate_general_case():
     request_data = request.get_json()
