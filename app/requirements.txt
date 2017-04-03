@@ -5,3 +5,4 @@ boto
 reportlab
 PyPDF2
 futures
+requests

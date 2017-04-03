@@ -6,7 +6,7 @@ import logging
 import subprocess
 import tempfile
 import settings
-import urllib
+import requests
 import uuid
 import concurrent.futures
 
@@ -177,7 +177,9 @@ def fetch(base_folder, page_tuple):
 def download(url, filename):
     """example docstring"""
     try:
-        urllib.request.urlretrieve(url, filename)
+        r = requests.get(url)
+        with open(filename,'wb') as f:
+        f.write(r.content)
         return True
     except Exception:
         logging.exception("problem during download of %s to %s", url, filename)
