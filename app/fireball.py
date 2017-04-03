@@ -179,7 +179,7 @@ def download(url, filename):
     try:
         urllib.request.urlretrieve(url, filename)
         return True
-    except urllib.request.URLError:
+    except Exception:
         logging.exception("problem during download of %s to %s", url, filename)
     return False
 
