@@ -170,7 +170,7 @@ def pdf_append_custom(pdf, custom_type):
     page_height = defaultPageSize[1]
 
     text = custom_type["message"]
-    text_width = stringWidth(text, 'Helvetica', '10')
+    text_width = stringWidth(text, 'Helvetica', 10)
     text_start_y = page_height * 0.3
     pdf_text_object = pdf.beginText((page_width - text_width) / 2.0, text_start_y)
     pdf_text_object.textOut(text)
