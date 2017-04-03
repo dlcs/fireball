@@ -11,8 +11,8 @@
             "input": "https://wellcomelibrary.org/service/pdf-cover/abcd1"
         },
         {
-            "type", "jpg",
-            "method", "s3",
+            "type": "jpg",
+            "method": "s3",
             "input": "s3://dlcs-thumbs/2/1/xyz1/low.jpg"
         },
         {
@@ -32,4 +32,3 @@
     }
 }
 ```
-

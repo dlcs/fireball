@@ -42,12 +42,12 @@ def generate():
     session_folder = make_session_folder()
 
     (fd, workfile) = tempfile.mkstemp(prefix=session_folder)
-
     logging.info("generate will use workfile %s", workfile)
 
     # load the cover pdf for the first page
     cover_page = pages[0]
     (cover_page_fd, cover_page_filename) = tempfile.mkstemp(prefix=session_folder)
+    logging.info("generate will use cover page filename %s", cover_page_filename)
 
     download_success = False
     if cover_page.type == "pdf" and cover_page.method == "download":
@@ -194,8 +194,8 @@ def setup_logging():
                         format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', )
     logging.getLogger('boto').setLevel(logging.ERROR)
     logging.getLogger('botocore').setLevel(logging.ERROR)
+    logging.getLogger('wekzeug').setLevel(logging.DEBUG)
 
 if __name__ == "__main__":
     setup_logging()
-
     main()
