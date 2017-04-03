@@ -9,6 +9,7 @@ import settings
 import requests
 import uuid
 import concurrent.futures
+import re
 
 from flask import Flask, request, jsonify
 
@@ -36,6 +37,8 @@ def generate():
     output = request_data["output"]
     pages = request_data["pages"]
     custom_types = request_data["customTypes"]
+
+    s3Connection = get_s3_connection()
 
     session_folder = make_session_folder()
 
@@ -79,11 +82,9 @@ def generate():
             logging.error("unknown page type %s", page["type"])
             return "unknown page type %s", page["type"]
 
-    parallel_fetch(images_to_download, session_folder)
+    parallel_fetch(s3Connection, images_to_download, session_folder)
 
     #pdf = Canvas(pageCompression=1)
-
-    #s3Connection = get_s3_connection()
 
     #write_file_to_s3(workfile, output, "application/pdf")
 
@@ -150,13 +151,13 @@ def make_session_folder():
         os.mkdir(session_folder)
     return session_folder
 
-def parallel_fetch(download_list, base_folder):
+def parallel_fetch(s3Connection, download_list, base_folder):
     """example docstring"""
 
     succeeded = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=settings.DOWNLOAD_POOL_SIZE) as executor:
         futures = {
-            executor.submit(fetch, base_folder, page):
+            executor.submit(fetch, s3Connection, base_folder, page):
                 page for page in download_list
         }
         for future in concurrent.futures.as_completed(futures):
@@ -165,11 +166,37 @@ def parallel_fetch(download_list, base_folder):
 
     return download_list.count == succeeded
 
-def fetch(base_folder, page):
+def fetch(s3Connection, base_folder, page):
     """example docstring"""
     target_filename = base_folder + "/" + page["id"]
     logging.debug("fetching %s to %s", page["input"], target_filename)
-    return download(page["input"], target_filename)
+    if page["input"].startswith('s3://'):
+        return download_s3(s3Connection, page["input"], target_filename)
+    else:
+        return download(page["input"], target_filename)
+
+def download_s3(s3Connection, uri, filename):
+    """example docstring"""
+    logging.debug("using s3 strategy to download %s", uri)
+
+    (bucket_name, key) = parse_bucket_uri(uri)
+
+    bucket = s3Connection.get_bucket(bucket_name)
+
+    s3_key = Key(bucket)
+    s3_key.key = key
+
+    try:
+        s3_key.get_contents_to_filename(filename + ".moving")
+
+        logging.debug("downloaded %s -> $s", (uri, filename + ".moving"))
+        os.rename(filename + ".moving", filename)
+        logging.debug("renamed to " + filename)
+    except Exception as download_exception:
+        logging.exception('hit a problem while trying to download %s: %s',
+                          uri, str(download_exception))
+        return False
+    return True
 
 def download(url, filename):
     """example docstring"""
@@ -178,8 +205,9 @@ def download(url, filename):
         with open(filename, 'wb') as file:
             file.write(download_request.content)
         return True
-    except Exception:
-        logging.exception("problem during download of %s to %s", url, filename)
+    except Exception as download_exception:
+        logging.exception("problem during download of %s to %s: %s", url, filename,
+                          str(download_exception))
     return False
 
 def get_s3_connection():
@@ -187,6 +215,18 @@ def get_s3_connection():
     return S3Connection(
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+
+def parse_bucket_uri(uri):
+    """
+    uri: s3://bucket/key
+    returns: bucket, key
+    """
+
+    match = re.search(r's3://([^\/]+)/(.*)$', uri)
+    if match:
+        return match.group(1), match.group(2)
+
+    return None, None
 
 def setup_logging():
     """example docstring"""
