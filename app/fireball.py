@@ -50,8 +50,8 @@ def generate():
     logging.info("generate will use cover page filename %s", cover_page_filename)
 
     download_success = False
-    if cover_page.type == "pdf" and cover_page.method == "download":
-        download_success = download(cover_page.input, cover_page_filename)
+    if cover_page["type"] == "pdf" and cover_page["method"] == "download":
+        download_success = download(cover_page["input"], cover_page_filename)
     else:
         logging.error("cover page was invalid")
         return
@@ -71,14 +71,14 @@ def generate():
     for page in pages_iterator:
         page_tuple = Page_Tuple(str(uuid.uuid4()), page)
         playbook.append(page_tuple)
-        if page.type == "jpg" and page.method == "s3":
+        if page["type"] == "jpg" and page["method"] == "s3":
             images_to_download.append(page_tuple)
-            logging.debug("adding %s to list of images to download", page.source)
-        elif hasattr(custom_types, page.type):
+            logging.debug("adding %s to list of images to download", page["source"])
+        elif hasattr(custom_types, page["type"]):
             # found custom type
-            logging.debug("found custom type %s", page.type)
+            logging.debug("found custom type %s", page["type"])
         else:
-            logging.error("unknown page type %s", page.type)
+            logging.error("unknown page type %s", page["type"])
             return
 
     parallel_fetch(images_to_download, session_folder)
@@ -170,8 +170,8 @@ def parallel_fetch(download_list, base_folder):
 def fetch(base_folder, page_tuple):
     """example docstring"""
     target_filename = base_folder + "/" + page_tuple.id
-    logging.debug("fetching %s to %s", page_tuple.page.input, target_filename)
-    return download(page_tuple.page.input, target_filename)
+    logging.debug("fetching %s to %s", page_tuple.page["input"], target_filename)
+    return download(page_tuple.page["input"], target_filename)
 
 def download(url, filename):
     """example docstring"""
