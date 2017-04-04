@@ -250,7 +250,7 @@ def pdf_append_image(pdf, filename):
         image_y = (decimal.Decimal(page_height) - height) / 2
         logging.debug("image offsets = %d x %d", image_x, image_y)
 
-        pdf.drawImage(filename, image_x, image_y, width=width, height=height)
+        pdf.drawImage(filename, int(image_x), int(image_y), width=int(width), height=int(height))
 
     except Exception as append_exception:
         logging.exception("problem during append to pdf of %s: %s", filename, str(append_exception))
