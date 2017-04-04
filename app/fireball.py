@@ -89,7 +89,7 @@ def generate():
 
     logging.debug("creating pdf")
 
-    pdf = Canvas(workfile)
+    pdf = Canvas(workfile, pageCompression=1)
 
     pages_iterator = iter(pages)
     next(pages_iterator)
@@ -123,6 +123,9 @@ def generate():
 
     logging.debug("merging cover page and generated pdf")
     merger = PdfFileMerger()
+
+    fix_pdf_compliance_version(cover_page_filename, settings.PDF_COMPLIANCE_VERSION)
+    fix_pdf_compliance_version(workfile, settings.PDF_COMPLIANCE_VERSION)
 
     merge_input1 = open(cover_page_filename, "rb")
     merge_input2 = open(workfile, "rb")
@@ -187,6 +190,12 @@ def generate_general_case():
         write_file_to_s3(workfile, output, "application/pdf")
 # gotta keep 'em separated
 
+def fix_pdf_compliance_version(filename, version):
+    """example docstring"""
+    logging.debug("fixing PDF compliance version of %s to %s", filename, version)
+    with open(filename, "r+b") as file:
+        file.write(version)
+
 def pdf_append_custom(pdf, custom_type):
     """example docstring"""
 
@@ -223,8 +232,8 @@ def pdf_append_image(pdf, filename):
             pass
         logging.debug("using dpi of %d", dpi)
 
-        width = image_width * 72 / dpi
-        height = image_height * 72 / dpi
+        width = image_width # * 72 / dpi
+        height = image_height # * 72 / dpi
         pdf.setPageSize((width, height))
         logging.debug("page size = %d x %d", width, height)
 
