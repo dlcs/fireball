@@ -96,7 +96,7 @@ def generate():
     first = True
     for page in pages_iterator:
         if first == False:
-            pdf.show()
+            pdf.showPage()
         first = False
         if page in pages_to_download:
             downloaded_file = session_folder + "/" + page["id"]
