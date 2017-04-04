@@ -47,7 +47,7 @@ def generate():
 
     session_folder = make_session_folder()
 
-    (fd, workfile) = make_temp_file(prefix=session_folder + "/")
+    workfile = make_temp_file(prefix=session_folder + "/")
     logging.info("generate will use workfile %s", workfile)
 
     # load the cover pdf for the first page
@@ -55,7 +55,7 @@ def generate():
     cover_page_filename = make_temp_file(prefix=session_folder + "/")
     logging.info("generate will use cover page filename %s", cover_page_filename)
 
-    (output_fd, output_filename) = make_temp_file(prefix=session_folder + "/")
+    output_filename = make_temp_file(prefix=session_folder + "/")
     logging.info("generate will use output filename %s", output_filename)
 
     download_success = False
@@ -190,8 +190,8 @@ def generate_general_case():
         page_index = page_index + 1
         logging.debug("page %d: type=%s", page_index, page.type)
 
-    if output_method == "s3":
-        write_file_to_s3(workfile, output, "application/pdf")
+    # if output_method == "s3":
+        # write_file_to_s3(workfile, output, "application/pdf")
 # gotta keep 'em separated
 
 def make_temp_file(prefix):
