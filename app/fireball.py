@@ -89,7 +89,7 @@ def generate():
 
     logging.debug("creating pdf")
 
-    pdf = Canvas(workfile)
+    pdf = Canvas(workfile, pageCompression=1)
 
     pages_iterator = iter(pages)
     next(pages_iterator)
