@@ -1,5 +1,6 @@
 import io
 import os
+import math
 import sys
 import json
 import logging
@@ -25,6 +26,8 @@ from reportlab.rl_config import defaultPageSize
 from PyPDF2 import PdfFileMerger
 
 from PIL import Image
+
+from filechunkio import FileChunkIO
 
 app = Flask(__name__)
 
@@ -258,11 +261,23 @@ def write_file_to_s3(s3Connection, filename, uri, mime_type):
 
         logging.debug("bucket = %s, key = %s", bucket_name, key)
 
+        multipart_session = bucket.initiate_multipart_upload(os.path.basename(filename))
+        chunk_size = 52428800
+        source_size = os.stat(filename).st_size
+        chunks_count = int(math.ceil(source_size / float(chunk_size)))
+
+        for index in range(chunks_count):
+            offset = index * chunk_size
+            bytes = min(chunk_size, source_size - offset)
+            with FileChunkIO(filename, "r", offset=offset, bytes=bytes) as file_part:
+                logging.debug("uploading part %d", index)
+                multipart_session.upload_part_from_file(file_part, part_num=index + 1)
+
+        multipart_session.complete_upload()
+        logging.debug("upload done")
+
         logging.debug("setting metadata")
         s3_key.set_metadata('Content-Type', mime_type)
-
-        logging.debug("setting key contents from filename %s", filename)
-        s3_key.set_contents_from_filename(filename)
 
     except Exception as write_exception:
         logging.exception('hit a problem while trying to upload %s to s3 and set metadata: %s',
