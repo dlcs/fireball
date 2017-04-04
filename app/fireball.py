@@ -241,11 +241,14 @@ def pdf_append_image(pdf, filename):
         logging.debug("page size = %d x %d", page_width, page_height)
 
         width, height = confine(image_width, image_height, page_width, page_height)
+        logging.debug("confined image size = %d x %d", width, height)
 
         pdf.setPageSize(A4)
 
-        image_x = decimal.Decimal(page_width - width) / 2
-        image_y = decimal.Decimal(page_height - height) / 2
+        # center
+        image_x = decimal.Decimal(page_width - width) / 2.0
+        image_y = decimal.Decimal(page_height - height) / 2.0
+        logging.debug("image offsets = %d x %d", image_x, image_y)
 
         pdf.drawImage(filename, image_x, image_y, width=width, height=height)
 
