@@ -93,10 +93,7 @@ def generate():
 
     pages_iterator = iter(pages)
     next(pages_iterator)
-    first = True
     for page in pages_iterator:
-        if first != True:
-            pdf.showPage()
         first = False
         if page in pages_to_download:
             downloaded_file = session_folder + "/" + page["id"]
@@ -117,6 +114,7 @@ def generate():
         elif page["type"] == "redacted":
             pdf_append_custom(pdf, custom_types["redacted"])
             logging.debug("image was redacted")
+        pdf.showPage()
 
     logging.debug("saving pdf")
     pdf.save()
