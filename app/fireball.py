@@ -44,14 +44,17 @@ def generate():
 
     session_folder = make_session_folder()
 
-    (fd, workfile) = tempfile.mkstemp(prefix=session_folder)
+    (fd, workfile) = tempfile.mkstemp(prefix=session_folder + "/")
     logging.info("generate will use workfile %s", workfile)
 
     # load the cover pdf for the first page
     cover_page = pages[0]
-    (cover_page_fd, cover_page_filename) = tempfile.mkstemp(prefix=session_folder)
+    (cover_page_fd, cover_page_filename) = tempfile.mkstemp(prefix=session_folder + "/")
     logging.info("generate will use cover page filename %s", cover_page_filename)
 
+    (output_fd, output_filename) = tempfile.mkstemp(prefix=session_folder + "/")
+    logging.info("generate will use output filename %s", output_filename)
+    
     download_success = False
     if cover_page["type"] == "pdf" and cover_page["method"] == "download":
         download_success = download(cover_page["input"], cover_page_filename)
@@ -66,14 +69,12 @@ def generate():
     # generate pdf from the rest of the pages
 
     pages_to_download = []
-    playbook = []
 
     # skip first page
     pages_iterator = iter(pages)
     next(pages_iterator)
     for page in pages_iterator:
         page["id"] = str(uuid.uuid4())
-        playbook.append(page)
         if page["type"] == "jpg" and page["method"] == "s3":
             pages_to_download.append(page)
             logging.debug("adding %s to list of images to download", page["input"])
@@ -114,9 +115,25 @@ def generate():
             pdf_append_custom(pdf, custom_types["redacted"])
             logging.debug("image was redacted")
 
+    logging.debug("saving pdf")
     pdf.save()
 
-    write_file_to_s3(workfile, output, "application/pdf")
+    # now merge the cover page with the workfile
+
+    logging.debug("merging cover page and generated pdf")
+    merger = PdfFileMerger()
+
+    merge_input1 = open(cover_page_filename, "rb")
+    merge_input2 = open(workfile, "rb")
+
+    merger.append(merge_input1)
+    merger.append(merge_input2)
+
+    logging.debug("writing to %s", output_filename)
+    merge_output = open(output_filename, "wb")
+    merger.write(merge_output)
+
+    write_file_to_s3(s3Connection, merge_output, output, "application/pdf")
 
     response_data = {
         "success": True
@@ -183,7 +200,7 @@ def pdf_append_custom(pdf, custom_type):
 
     text_width = stringWidth(text, 'Helvetica', 10)
     logging.debug("text_width = %d", text_width)
-    
+
     text_start_y = page_height * 0.3
     logging.debug("text_start_y = %d", text_start_y)
 
@@ -218,10 +235,26 @@ def pdf_append_image(pdf, filename):
         logging.exception("problem during append to pdf of %s: %s", filename, str(append_exception))
         return False
     return True
-  
-def write_file_to_s3(workfile, output, mime_type):
+
+def write_file_to_s3(s3Connection, filename, uri, mime_type):
     """example docstring"""
     logging.debug("write_file_to_s3")
+
+    (bucket_name, key) = parse_bucket_uri(uri)
+
+    try:
+        bucket = s3Connection.get_bucket(bucket_name)
+
+        s3_key = Key(bucket)
+        s3_key.Key = key
+
+        s3_key.set_contents_from_filename(filename)
+        s3_key.set_metadata('Content-Type', mime_type)
+    except Exception as write_exception:
+        logging.exception('hit a problem while trying to upload %s to s3 and set metadata: %s',
+                          uri, str(write_exception))
+        return False
+    return True
 
 def make_session_folder():
     """example docstring"""
