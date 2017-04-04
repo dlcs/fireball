@@ -136,7 +136,7 @@ def generate():
     merge_output = open(output_filename, "wb")
     merger.write(merge_output)
 
-    write_file_to_s3(s3Connection, merge_output, output, "application/pdf")
+    write_file_to_s3(s3Connection, output_filename, output, "application/pdf")
 
     response_data = {
         "success": True
