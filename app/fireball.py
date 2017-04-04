@@ -239,7 +239,7 @@ def pdf_append_image(pdf, filename):
 
 def write_file_to_s3(s3Connection, filename, uri, mime_type):
     """example docstring"""
-    logging.debug("write_file_to_s3")
+    logging.debug("write_file_to_s3 file: %s -> %s (%s)", filename, uri, mime_type)
 
     (bucket_name, key) = parse_bucket_uri(uri)
 
@@ -249,8 +249,12 @@ def write_file_to_s3(s3Connection, filename, uri, mime_type):
         s3_key = Key(bucket)
         s3_key.Key = key
 
-        s3_key.set_contents_from_filename(filename)
+        logging.debug("setting metadata")
         s3_key.set_metadata('Content-Type', mime_type)
+
+        logging.debug("setting key contents from filename %s", filename)
+        s3_key.set_contents_from_filename(filename)
+
     except Exception as write_exception:
         logging.exception('hit a problem while trying to upload %s to s3 and set metadata: %s',
                           uri, str(write_exception))
