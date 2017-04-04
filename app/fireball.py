@@ -256,12 +256,9 @@ def write_file_to_s3(s3Connection, filename, uri, mime_type):
     try:
         bucket = s3Connection.get_bucket(bucket_name)
 
-        s3_key = Key(bucket)
-        s3_key.key = key
-
         logging.debug("bucket = %s, key = %s", bucket_name, key)
 
-        multipart_session = bucket.initiate_multipart_upload(os.path.basename(filename))
+        multipart_session = bucket.initiate_multipart_upload(key)
         chunk_size = 52428800
         source_size = os.stat(filename).st_size
         chunks_count = int(math.ceil(source_size / float(chunk_size)))
@@ -277,7 +274,10 @@ def write_file_to_s3(s3Connection, filename, uri, mime_type):
         logging.debug("upload done")
 
         logging.debug("setting metadata")
-        s3_key.set_metadata('Content-Type', mime_type)
+
+        s3_key = Key(bucket)
+        s3_key.key = key
+        s3_key.set_remote_metadata({'Content-Type': mime_type}, {}, True)
 
     except Exception as write_exception:
         logging.exception('hit a problem while trying to upload %s to s3 and set metadata: %s',
