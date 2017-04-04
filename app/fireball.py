@@ -243,8 +243,8 @@ def pdf_append_image(pdf, filename):
 
         pdf.setPageSize(A4)
 
-        image_x = (page_width - width) / 2
-        image_y = (page_height - height) / 2
+        image_x = decimal.Decimal(page_width - width) / 2
+        image_y = decimal.Decimal(page_height - height) / 2
 
         pdf.drawImage(filename, image_x, image_y, width=width, height=height)
 
