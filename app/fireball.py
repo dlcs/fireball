@@ -54,7 +54,7 @@ def generate():
 
     (output_fd, output_filename) = tempfile.mkstemp(prefix=session_folder + "/")
     logging.info("generate will use output filename %s", output_filename)
-    
+
     download_success = False
     if cover_page["type"] == "pdf" and cover_page["method"] == "download":
         download_success = download(cover_page["input"], cover_page_filename)
@@ -93,7 +93,11 @@ def generate():
 
     pages_iterator = iter(pages)
     next(pages_iterator)
+    first = True
     for page in pages_iterator:
+        if first == False:
+            pdf.show()
+        first = False
         if page in pages_to_download:
             downloaded_file = session_folder + "/" + page["id"]
             logging.debug("checking file %s", downloaded_file)
@@ -102,7 +106,6 @@ def generate():
                 if pdf_append_image(pdf, downloaded_file):
                     logging.debug("appended image")
                     # all good
-                    pass
                 else:
                     # problem
                     logging.debug("problem appending image")
@@ -206,7 +209,6 @@ def pdf_append_custom(pdf, custom_type):
 
     pdf_text_object = pdf.beginText((page_width - text_width) / 2.0, text_start_y)
     pdf_text_object.textOut(text)
-    pdf.showPage()
 
 def pdf_append_image(pdf, filename):
     """example docstring"""
@@ -230,7 +232,6 @@ def pdf_append_image(pdf, filename):
 
         pdf.drawImage(filename, 0, 0, width=width, height=height)
 
-        pdf.showPage()
     except Exception as append_exception:
         logging.exception("problem during append to pdf of %s: %s", filename, str(append_exception))
         return False
