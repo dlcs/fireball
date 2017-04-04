@@ -247,7 +247,7 @@ def write_file_to_s3(s3Connection, filename, uri, mime_type):
         bucket = s3Connection.get_bucket(bucket_name)
 
         s3_key = Key(bucket)
-        s3_key.Key = key
+        s3_key.key = key
 
         logging.debug("bucket = %s, key = %s", bucket_name, key)
 
