@@ -26,8 +26,6 @@ from PyPDF2 import PdfFileMerger
 
 from PIL import Image
 
-import pdfkit
-
 app = Flask(__name__)
 
 def main():
@@ -59,7 +57,7 @@ def generate():
 
     download_success = False
     if cover_page["type"] == "pdf" and cover_page["method"] == "download":
-        pdfkit.from_url(cover_page["input"], cover_page_filename)
+        download_success = download(cover_page["input"], cover_page_filename)
     else:
         logging.error("cover page was invalid")
         return "cover page was invalid"
@@ -91,7 +89,7 @@ def generate():
 
     logging.debug("creating pdf")
 
-    pdf = Canvas(workfile, pageCompression=1)
+    pdf = Canvas(workfile)
 
     pages_iterator = iter(pages)
     next(pages_iterator)

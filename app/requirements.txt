@@ -6,4 +6,3 @@ reportlab
 PyPDF2
 futures
 requests
-pdfkit
