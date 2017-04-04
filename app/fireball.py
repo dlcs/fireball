@@ -30,6 +30,7 @@ from PIL import Image
 
 from filechunkio import FileChunkIO
 from decimal import Context, ROUND_HALF_EVEN
+import decimal
 
 app = Flask(__name__)
 
