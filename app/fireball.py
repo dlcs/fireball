@@ -246,8 +246,8 @@ def pdf_append_image(pdf, filename):
         pdf.setPageSize(A4)
 
         # center
-        image_x = decimal.Decimal(page_width - width) / 2.0
-        image_y = decimal.Decimal(page_height - height) / 2.0
+        image_x = (decimal.Decimal(page_width) - width) / 2.0
+        image_y = (decimal.Decimal(page_height) - height) / 2.0
         logging.debug("image offsets = %d x %d", image_x, image_y)
 
         pdf.drawImage(filename, image_x, image_y, width=width, height=height)
