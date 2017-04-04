@@ -22,12 +22,14 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.rl_config import defaultPageSize
+from reportlab.lib.pagesizes import A4
 
 from PyPDF2 import PdfFileMerger
 
 from PIL import Image
 
 from filechunkio import FileChunkIO
+from decimal import Context, ROUND_HALF_EVEN
 
 app = Flask(__name__)
 
@@ -93,7 +95,7 @@ def generate():
 
     logging.debug("creating pdf")
 
-    pdf = Canvas(workfile, pageCompression=1)
+    pdf = Canvas(workfile, pageCompression=1, pagesize=A4)
 
     pages_iterator = iter(pages)
     next(pages_iterator)
@@ -212,8 +214,8 @@ def pdf_append_custom(pdf, custom_type):
 
     logging.debug("appending custom to pdf")
 
-    page_width = defaultPageSize[0]
-    page_height = defaultPageSize[1]
+    page_width, page_height = A4
+
     logging.debug("page size = %d x %d", page_width, page_height)
 
     text = custom_type["message"]
@@ -225,30 +227,26 @@ def pdf_append_custom(pdf, custom_type):
     text_start_y = page_height * 0.3
     logging.debug("text_start_y = %d", text_start_y)
 
-    pdf_text_object = pdf.beginText((page_width - text_width) / 2.0, text_start_y)
-    pdf_text_object.textOut(text)
+    pdf.drawCentredString((page_width - text_width) / 2.0, text_start_y, text)
 
 def pdf_append_image(pdf, filename):
     """example docstring"""
-    dpi = settings.DEFAULT_DPI
     try:
         logging.debug("appending image %s", filename)
         image = Image.open(filename)
         image_width, image_height = image.size
         logging.debug("image size = %d x %d", image_width, image_height)
+        page_width, page_height = A4
+        logging.debug("page size = %d x %d", page_width, page_height)
 
-        try:
-            dpi = image.info['dpi'][0]
-        except KeyError:
-            pass
-        logging.debug("using dpi of %d", dpi)
+        width, height = confine(image_width, image_height, page_width, page_height)
 
-        width = image_width # * 72 / dpi
-        height = image_height # * 72 / dpi
-        pdf.setPageSize((width, height))
-        logging.debug("page size = %d x %d", width, height)
+        pdf.setPageSize(A4)
 
-        pdf.drawImage(filename, 0, 0, width=width, height=height)
+        image_x = (page_width - width) / 2
+        image_y = (page_height - height) / 2
+
+        pdf.drawImage(filename, image_x, image_y, width=width, height=height)
 
     except Exception as append_exception:
         logging.exception("problem during append to pdf of %s: %s", filename, str(append_exception))
@@ -378,6 +376,19 @@ def parse_bucket_uri(uri):
         return match.group(1), match.group(2)
 
     return None, None
+
+def confine(w, h, req_w, req_h):
+    # reduce longest edge to size
+    if w <= req_w and h <= req_h:
+        return w, h
+
+    context = Context(prec=17, rounding=ROUND_HALF_EVEN)
+    d_w = context.create_decimal(w)
+    d_req_w = context.create_decimal(req_w)
+    d_h = context.create_decimal(h)
+    d_req_h = context.create_decimal(req_h)
+    scale = context.create_decimal(round(min(d_req_w / d_w, d_req_h / d_h), 17))
+    return tuple(map(lambda d: (d * scale).to_integral_exact(context=context), [d_w, d_h]))
 
 def setup_logging():
     """example docstring"""
