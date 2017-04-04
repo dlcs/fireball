@@ -249,6 +249,8 @@ def write_file_to_s3(s3Connection, filename, uri, mime_type):
         s3_key = Key(bucket)
         s3_key.Key = key
 
+        logging.debug("bucket = %s, key = %s", bucket_name, key)
+
         logging.debug("setting metadata")
         s3_key.set_metadata('Content-Type', mime_type)
 
