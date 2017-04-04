@@ -222,13 +222,14 @@ def pdf_append_custom(pdf, custom_type):
     text = custom_type["message"]
     logging.debug("message = %s", text)
 
-    text_width = stringWidth(text, 'Helvetica', 10)
+    text_width = stringWidth(text, 'Helvetica', 12)
     logging.debug("text_width = %d", text_width)
 
-    text_start_y = page_height * 0.3
+    text_start_y = page_height / 2
     logging.debug("text_start_y = %d", text_start_y)
 
-    pdf.drawCentredString((page_width - text_width) / 2.0, text_start_y, text)
+    pdf.setFont('Helvetica', 12)
+    pdf.drawCentredString((page_width - text_width) / 2, text_start_y, text)
 
 def pdf_append_image(pdf, filename):
     """example docstring"""
