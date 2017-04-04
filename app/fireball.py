@@ -140,6 +140,7 @@ def generate():
     logging.debug("writing to %s", output_filename)
     merge_output = open(output_filename, "wb")
     merger.write(merge_output)
+    merge_output.close()
 
     write_file_to_s3(s3Connection, output_filename, output, "application/pdf")
 
