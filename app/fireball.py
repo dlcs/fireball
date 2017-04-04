@@ -47,20 +47,21 @@ def generate():
 
     session_folder = make_session_folder()
 
-    (fd, workfile) = tempfile.mkstemp(prefix=session_folder + "/")
+    (fd, workfile) = make_temp_file(prefix=session_folder + "/")
     logging.info("generate will use workfile %s", workfile)
 
     # load the cover pdf for the first page
     cover_page = pages[0]
-    (cover_page_fd, cover_page_filename) = tempfile.mkstemp(prefix=session_folder + "/")
+    cover_page_filename = make_temp_file(prefix=session_folder + "/")
     logging.info("generate will use cover page filename %s", cover_page_filename)
 
-    (output_fd, output_filename) = tempfile.mkstemp(prefix=session_folder + "/")
+    (output_fd, output_filename) = make_temp_file(prefix=session_folder + "/")
     logging.info("generate will use output filename %s", output_filename)
 
     download_success = False
     if cover_page["type"] == "pdf" and cover_page["method"] == "download":
         download_success = download(cover_page["input"], cover_page_filename)
+
     else:
         logging.error("cover page was invalid")
         return "cover page was invalid"
@@ -192,6 +193,12 @@ def generate_general_case():
     if output_method == "s3":
         write_file_to_s3(workfile, output, "application/pdf")
 # gotta keep 'em separated
+
+def make_temp_file(prefix):
+    """example docstring"""
+    file = tempfile.NamedTemporaryFile(mode="w+b", delete=False)
+    file.close()
+    return file.name
 
 def fix_pdf_compliance_version(filename, version):
     """example docstring"""
