@@ -95,7 +95,7 @@ def generate():
     next(pages_iterator)
     first = True
     for page in pages_iterator:
-        if first == False:
+        if first != True:
             pdf.showPage()
         first = False
         if page in pages_to_download:
