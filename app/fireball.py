@@ -228,8 +228,11 @@ def pdf_append_custom(pdf, custom_type):
     text_start_y = page_height / 2
     logging.debug("text_start_y = %d", text_start_y)
 
+    text_start_x = (page_width - text_width) / 2
+    logging.debug("text_start_x = %d", text_start_x)
+    
     pdf.setFont('Helvetica', 12)
-    pdf.drawCentredString((page_width - text_width) / 2, text_start_y, text)
+    pdf.drawCentredString(text_start_x, text_start_y, text)
 
 def pdf_append_image(pdf, filename):
     """example docstring"""
