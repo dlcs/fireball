@@ -148,6 +148,7 @@ def generate():
     write_file_to_s3(s3Connection, output_filename, output, "application/pdf")
 
     response_data = {
+        "size": os.stat(output_filename).st_size,
         "success": True
     }
 
