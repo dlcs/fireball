@@ -40,6 +40,9 @@ def main():
 @app.route('/pdf', methods=['POST'])
 def generate():
     """example docstring"""
+
+    setup_logging()
+    
     request_data = request.json
 
     output = request_data["output"]
