@@ -42,7 +42,7 @@ def generate():
     """example docstring"""
 
     setup_logging()
-    
+
     request_data = request.json
 
     output = request_data["output"]
@@ -404,7 +404,7 @@ def confine(w, h, req_w, req_h):
 
 def setup_logging():
     """example docstring"""
-    logging.basicConfig(filename="fireball.log",
+    logging.basicConfig(filename=settings.LOGFILE,
                         filemode='a',
                         level=logging.DEBUG,
                         format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', )
