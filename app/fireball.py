@@ -204,7 +204,7 @@ def generate_general_case():
 
 def make_temp_file(prefix):
     """example docstring"""
-    file = tempfile.NamedTemporaryFile(mode="w+b", delete=False)
+    file = tempfile.NamedTemporaryFile(mode="w+b", delete=False, prefix=prefix)
     file.close()
     return file.name
 
