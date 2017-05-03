@@ -350,7 +350,7 @@ def download_s3(s3Connection, uri, filename):
     try:
         s3_key.get_contents_to_filename(filename + ".moving")
 
-        logging.debug("downloaded %s -> $s", (uri, filename + ".moving"))
+        logging.debug("downloaded %s -> %s", (uri, filename + ".moving"))
         os.rename(filename + ".moving", filename)
         logging.debug("renamed to " + filename)
     except Exception as download_exception:
