@@ -16,8 +16,7 @@ import re
 
 from flask import Flask, request, jsonify
 
-from boto.s3.connection import S3Connection
-from boto.s3.key import Key
+import boto3
 
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -49,8 +48,6 @@ def generate():
     output = request_data["output"]
     pages = request_data["pages"]
     custom_types = request_data["customTypes"]
-
-    s3Connection = get_s3_connection()
 
     session_folder = make_session_folder()
 
@@ -96,7 +93,7 @@ def generate():
             logger.error(f"unknown page type {page['type']}")
             return f"unknown page type {page['type']}"
 
-    parallel_fetch(s3Connection, pages_to_download, session_folder)
+    parallel_fetch(pages_to_download, session_folder)
 
     logger.debug("creating pdf")
 
@@ -149,7 +146,7 @@ def generate():
     merger.write(merge_output)
     merge_output.close()
 
-    write_file_to_s3(s3Connection, output_filename, output, "application/pdf")
+    write_file_to_s3(output_filename, output, "application/pdf")
 
     response_data = {
         "size": os.stat(output_filename).st_size,
@@ -266,29 +263,43 @@ def pdf_append_image(pdf, filename):
     return True
 
 
-def write_file_to_s3(s3Connection, filename, uri, mime_type):
+def write_file_to_s3(filename, uri, mime_type):
     logger.debug(f"write_file_to_s3 file: {filename} -> {uri} ({mime_type})")
 
     (bucket_name, key) = parse_bucket_uri(uri)
 
-    try:
-        bucket = s3Connection.get_bucket(bucket_name)
+    s3 = boto3.client("s3")
 
+    try:
         logger.debug(f"bucket = {bucket_name}, key = {key}")
 
-        multipart_session = bucket.initiate_multipart_upload(key)
+        multipart_session = s3.create_multipart_upload(Bucket=bucket, Key=key)
+        upload_id = multipart_session["UploadId"]
         chunk_size = 52428800
         source_size = os.stat(filename).st_size
         chunks_count = int(math.ceil(source_size / float(chunk_size)))
+
+        parts = []
 
         for index in range(chunks_count):
             offset = index * chunk_size
             bytes = min(chunk_size, source_size - offset)
             with FileChunkIO(filename, "r", offset=offset, bytes=bytes) as file_part:
                 logger.debug(f"uploading part {index}")
-                multipart_session.upload_part_from_file(file_part, part_num=index + 1)
+                part_response = s3.upload_part(UploadId=upload_id, Bucket=bucket, Key=key, Body=file_part, PartNumber=index + 1)
+                parts.append({
+                    "ETag": part_response["ETag"],
+                    "PartNumber": index + 1
+                })
 
-        multipart_session.complete_upload()
+        complete_response = s3.complete_multipart_upload(UploadId=upload_id, Bucket=bucket, Key=key, MultiPartUpload={
+            "Parts": parts
+        })
+
+        if "RequestCharged" not in complete_response:
+            logger.error("multipart upload failed")
+            return False
+
         logger.debug("upload done")
 
         logger.debug("setting metadata")
@@ -312,11 +323,11 @@ def make_session_folder():
     return session_folder
 
 
-def parallel_fetch(s3Connection, download_list, base_folder):
+def parallel_fetch(download_list, base_folder):
     succeeded = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=settings.DOWNLOAD_POOL_SIZE) as executor:
         futures = {
-            executor.submit(fetch, s3Connection, base_folder, page):
+            executor.submit(fetch, base_folder, page):
                 page for page in download_list
         }
         for future in concurrent.futures.as_completed(futures):
@@ -326,28 +337,25 @@ def parallel_fetch(s3Connection, download_list, base_folder):
     return download_list.count == succeeded
 
 
-def fetch(s3Connection, base_folder, page):
+def fetch(base_folder, page):
     target_filename = base_folder + "/" + page["id"]
     logger.debug(f"fetching {page['input']} to {target_filename}")
     if page["input"].startswith('s3://'):
-        return download_s3(s3Connection, page["input"], target_filename)
+        return download_s3(page["input"], target_filename)
     else:
         return download(page["input"], target_filename)
 
 
-def download_s3(s3Connection, uri, filename):
+def download_s3(uri, filename):
 
     logger.debug(f"using s3 strategy to download {uri}")
 
     (bucket_name, key) = parse_bucket_uri(uri)
 
-    bucket = s3Connection.get_bucket(bucket_name)
-
-    s3_key = Key(bucket)
-    s3_key.key = key
+    s3 = boto3.resource("s3")
 
     try:
-        s3_key.get_contents_to_filename(filename + ".moving")
+        s3.Object(bucket_name, key).download_file(filename + ".moving")
 
         logger.debug(f"downloaded {uri} -> {filename}.moving")
         os.rename(filename + ".moving", filename)
@@ -367,10 +375,6 @@ def download(url, filename):
     except Exception as download_exception:
         logger.exception(f"problem during download of {url} to {filename}: {download_exception}")
     return False
-
-
-def get_s3_connection():
-    return S3Connection()
 
 
 def parse_bucket_uri(uri):

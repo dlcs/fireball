@@ -1,10 +1,15 @@
 FROM alpine:3.9
 
 RUN apk add --update --no-cache --virtual=run-deps \
-  python3 \
+  python3-dev \
   uwsgi \
   uwsgi-http \
   uwsgi-python3 \
+  jpeg-dev \
+  zlib-dev \
+  build-base \
+  gcc \
+  linux-headers \
   ca-certificates
 
 WORKDIR /opt/fireball
