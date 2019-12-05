@@ -1,12 +1,22 @@
-FROM ubuntu
+FROM alpine:3.9
 
-RUN apt-get update -y && apt-get install -y python-pip python-dev build-essential nginx uwsgi curl
-COPY etc/fireball.nginx.conf /etc/nginx/sites-available/fireball
-RUN ln -s /etc/nginx/sites-available/fireball /etc/nginx/sites-enabled/fireball && rm -f /etc/nginx/sites-enabled/default
+RUN apk add --update --no-cache --virtual=run-deps \
+  python3-dev \
+  uwsgi \
+  uwsgi-http \
+  uwsgi-python3 \
+  jpeg-dev \
+  zlib-dev \
+  build-base \
+  gcc \
+  linux-headers \
+  ca-certificates
+
 WORKDIR /opt/fireball
-CMD /opt/fireball/run_fireball.sh
+
+CMD [ "uwsgi", "--plugins", "http,python3", "--http", "0.0.0.0:80", "--module", "wsgi" ]
+
 EXPOSE 80
-COPY app/requirements.txt /opt/fireball/requirements.txt
-RUN pip install -r /opt/fireball/requirements.txt
+COPY requirements.txt /opt/fireball/requirements.txt
+RUN pip3 install --no-cache-dir -r /opt/fireball/requirements.txt
 COPY app /opt/fireball
-COPY test.* /opt/fireball/

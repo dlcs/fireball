@@ -1,9 +1,10 @@
 Pillow
 Flask
 uwsgi
-boto
+boto3
 reportlab
 PyPDF2
 futures
 requests
 filechunkio
+logzero
