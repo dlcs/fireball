@@ -292,13 +292,13 @@ def write_file_to_s3(filename, uri, mime_type):
             bytes = min(chunk_size, source_size - offset)
             with FileChunkIO(filename, "r", offset=offset, bytes=bytes) as file_part:
                 logger.debug(f"uploading part {index}")
-                part_response = s3.upload_part(UploadId=upload_id, Bucket=bucket, Key=key, Body=file_part, PartNumber=index + 1)
+                part_response = s3.upload_part(UploadId=upload_id, Bucket=bucket_name, Key=key, Body=file_part, PartNumber=index + 1)
                 parts.append({
                     "ETag": part_response["ETag"],
                     "PartNumber": index + 1
                 })
 
-        complete_response = s3.complete_multipart_upload(UploadId=upload_id, Bucket=bucket, Key=key, MultiPartUpload={
+        complete_response = s3.complete_multipart_upload(UploadId=upload_id, Bucket=bucket_name, Key=key, MultiPartUpload={
             "Parts": parts
         })
 
@@ -310,7 +310,7 @@ def write_file_to_s3(filename, uri, mime_type):
 
         logger.debug("setting metadata")
 
-        s3_key = Key(bucket)
+        s3_key = Key(bucket_name)
         s3_key.key = key
         s3_key.set_remote_metadata({'Content-Type': mime_type}, {}, True)
 
