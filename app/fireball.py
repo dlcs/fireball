@@ -279,7 +279,7 @@ def write_file_to_s3(filename, uri, mime_type):
     try:
         logger.debug(f"bucket = {bucket_name}, key = {key}")
 
-        multipart_session = s3.create_multipart_upload(Bucket=bucket, Key=key)
+        multipart_session = s3.create_multipart_upload(Bucket=bucket_name, Key=key)
         upload_id = multipart_session["UploadId"]
         chunk_size = 52428800
         source_size = os.stat(filename).st_size
