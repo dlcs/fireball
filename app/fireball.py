@@ -298,7 +298,7 @@ def write_file_to_s3(filename, uri, mime_type):
                     "PartNumber": index + 1
                 })
 
-        complete_response = s3.complete_multipart_upload(UploadId=upload_id, Bucket=bucket_name, Key=key, MultiPartUpload={
+        complete_response = s3.complete_multipart_upload(UploadId=upload_id, Bucket=bucket_name, Key=key, MultipartUpload={
             "Parts": parts
         })
 
