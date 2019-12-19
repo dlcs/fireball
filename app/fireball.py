@@ -52,6 +52,7 @@ def generate():
     output = request_data["output"]
     pages = request_data["pages"]
     custom_types = request_data["customTypes"]
+    title = request_data["title"]
 
     s3_resource = boto3.resource("s3")
 
@@ -152,7 +153,11 @@ def generate():
     merger.write(merge_output)
     merge_output.close()
 
-    write_file_to_s3(output_filename, output, "application/pdf")
+    write_file_to_s3(
+        filename=output_filename,
+        uri=output,
+        title=title,
+        mime_type="application/pdf")
 
     response_data = {
         "size": os.stat(output_filename).st_size,
@@ -269,8 +274,8 @@ def pdf_append_image(pdf, filename):
     return True
 
 
-def write_file_to_s3(filename, uri, mime_type):
-    logger.debug(f"write_file_to_s3 file: {filename} -> {uri} ({mime_type})")
+def write_file_to_s3(filename, uri, title, mime_type):
+    logger.debug(f"write_file_to_s3 file: {filename} -> {uri} {title} ({mime_type})")
 
     (bucket_name, key) = parse_bucket_uri(uri)
 
@@ -279,7 +284,11 @@ def write_file_to_s3(filename, uri, mime_type):
     try:
         logger.debug(f"bucket = {bucket_name}, key = {key}")
 
-        multipart_session = s3.create_multipart_upload(Bucket=bucket_name, Key=key, ContentType=mime_type)
+        multipart_session = s3.create_multipart_upload(
+            Bucket=bucket_name,
+            Key=key,
+            ContentType=mime_type,
+            ContentDisposition='attachment; filename="' + title + '"')
         upload_id = multipart_session["UploadId"]
         chunk_size = 52428800
         source_size = os.stat(filename).st_size
