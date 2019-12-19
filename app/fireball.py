@@ -310,9 +310,8 @@ def write_file_to_s3(filename, uri, mime_type):
 
         logger.debug("setting metadata")
 
-        s3_key = Key(bucket_name)
-        s3_key.key = key
-        s3_key.set_remote_metadata({'Content-Type': mime_type}, {}, True)
+        s3_object = s3.Object(bucket_name, key)
+        s3_object.metadata.update({'Content-Type': mime_type})
 
     except Exception as write_exception:
         logger.exception(f"hit a problem while trying to upload {uri} to s3 and set metadata: {write_exception}")
