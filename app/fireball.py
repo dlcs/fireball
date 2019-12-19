@@ -310,7 +310,7 @@ def write_file_to_s3(filename, uri, mime_type):
 
         logger.debug("setting metadata")
 
-        s3_object = s3.Object(bucket_name, key)
+        s3_object = boto3.resource("s3").Object(bucket_name, key)
         s3_object.metadata.update({'Content-Type': mime_type})
 
     except Exception as write_exception:
