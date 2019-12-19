@@ -302,7 +302,7 @@ def write_file_to_s3(filename, uri, mime_type):
             "Parts": parts
         })
 
-        if "RequestCharged" not in complete_response:
+        if "Location" not in complete_response:
             logger.error("multipart upload failed")
             return False
 
