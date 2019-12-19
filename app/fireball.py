@@ -216,7 +216,7 @@ def make_temp_file(prefix):
 def fix_pdf_compliance_version(filename, version):
     logger.debug(f"fixing PDF compliance version of {filename} to {version}")
     with open(filename, "r+b") as file:
-        file.write(version)
+        file.write(version.encode('ascii'))
 
 
 def pdf_append_custom(pdf, custom_type):
