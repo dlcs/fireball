@@ -279,7 +279,7 @@ def write_file_to_s3(filename, uri, mime_type):
     try:
         logger.debug(f"bucket = {bucket_name}, key = {key}")
 
-        multipart_session = s3.create_multipart_upload(Bucket=bucket_name, Key=key)
+        multipart_session = s3.create_multipart_upload(Bucket=bucket_name, Key=key, ContentType=mime_type)
         upload_id = multipart_session["UploadId"]
         chunk_size = 52428800
         source_size = os.stat(filename).st_size
@@ -308,13 +308,8 @@ def write_file_to_s3(filename, uri, mime_type):
 
         logger.debug("upload done")
 
-        logger.debug("setting metadata")
-
-        s3_object = boto3.resource("s3").Object(bucket_name, key)
-        s3_object.metadata.update({'Content-Type': mime_type})
-
     except Exception as write_exception:
-        logger.exception(f"hit a problem while trying to upload {uri} to s3 and set metadata: {write_exception}")
+        logger.exception(f"hit a problem while trying to upload {uri} to s3: {write_exception}")
         return False
     return True
 
