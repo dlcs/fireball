@@ -40,14 +40,20 @@ if settings.DEBUG:
 else:
     logzero.loglevel(logging.INFO)
 
+s3_resource = None
+
 
 @app.route('/pdf', methods=['POST'])
 def generate():
+    global s3_resource
+
     request_data = request.json
 
     output = request_data["output"]
     pages = request_data["pages"]
     custom_types = request_data["customTypes"]
+
+    s3_resource = boto3.resource("s3")
 
     session_folder = make_session_folder()
 
@@ -348,14 +354,14 @@ def fetch(base_folder, page):
 
 def download_s3(uri, filename):
 
+    global s3_resource
+
     logger.debug(f"using s3 strategy to download {uri}")
 
     (bucket_name, key) = parse_bucket_uri(uri)
 
-    s3 = boto3.resource("s3")
-
     try:
-        s3.Object(bucket_name, key).download_file(filename + ".moving")
+        s3_resource.Object(bucket_name, key).download_file(filename + ".moving")
 
         logger.debug(f"downloaded {uri} -> {filename}.moving")
         os.rename(filename + ".moving", filename)
