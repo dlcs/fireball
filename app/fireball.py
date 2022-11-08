@@ -72,12 +72,11 @@ def generate():
     download_success = False
     if cover_page["type"] == "pdf" and cover_page["method"] == "download":
         download_success = download(cover_page["input"], cover_page_filename)
-
     else:
         logger.error("cover page was invalid")
         return "cover page was invalid"
 
-    if download_success != True:
+    if not download_success:
         logger.error("problem during download")
         return "problem during download"
 
@@ -153,7 +152,7 @@ def generate():
     merger.write(merge_output)
     merge_output.close()
 
-    write_file_to_s3(
+    success = write_file_to_s3(
         filename=output_filename,
         uri=output,
         title=title,
@@ -161,55 +160,12 @@ def generate():
 
     response_data = {
         "size": os.stat(output_filename).st_size,
-        "success": True
+        "success": success
     }
 
-    return jsonify(response_data)
+    status_code = 200 if success else 500
 
-
-@app.route('/general-case/', methods=['POST'])
-def generate_general_case():
-    request_data = request.get_json()
-
-    output_method = request_data.get("method")
-    output = request_data.get("output")
-
-    pages = request_data.get("pages")
-
-    custom_types = request_data.get("customTypes")
-
-    # create a plan for the operations
-    # if any pages are a pdf, then we will need to merge results with them
-
-    # e.g. p1 = pdf, p2 = jpg, p3 = jpg
-    # plan = merge(p1, pdf(p2,p3))
-
-    # p1 = jpg, p2 = jpg, p3 = pdf
-    # plan = merge(pdf(p1,p2), p3)
-
-    # p1 = jpg, p2 = pdf, p3 = jpg, p4 = pdf
-    # plan = merge(pdf(p1), p2, pdf(p3), p4)
-
-    # p1 = jpg, p2 = jpg, p3 = jpg
-    # plan = pdf(p1,p2,p3)
-
-    plan = []
-
-    if any(page.type == "pdf" for page in pages):
-        # got pdfs to merge with our generated pages
-        logger.debug("we will need to merge existing pdf with our work")
-
-    workfile = ""
-
-    page_index = 0
-
-    for page in pages:
-        page_index = page_index + 1
-        logger.debug(f"page {page_index}: type={page.type}")
-
-    # if output_method == "s3":
-        # write_file_to_s3(workfile, output, "application/pdf")
-# gotta keep 'em separated
+    return jsonify(response_data), status_code
 
 
 def make_temp_file(prefix):
