@@ -169,6 +169,11 @@ def generate():
         cleanup(session_folder)
 
 
+@app.route('/ping', methods=['GET'])
+def ping():
+    return {"status": "healthy"}
+
+
 def make_temp_file(prefix):
     file = tempfile.NamedTemporaryFile(mode="w+b", delete=False, prefix=prefix)
     file.close()
