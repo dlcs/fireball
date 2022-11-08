@@ -1,10 +1,6 @@
-FROM alpine:3.9
+FROM python:3.10-alpine
 
 RUN apk add --update --no-cache --virtual=run-deps \
-  python3-dev \
-  uwsgi \
-  uwsgi-http \
-  uwsgi-python3 \
   jpeg-dev \
   zlib-dev \
   build-base \
