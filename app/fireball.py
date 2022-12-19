@@ -1,12 +1,10 @@
-import io
 import os
 import math
-import sys
-import json
+import shutil
+
 import logzero
 import logging
 from logzero import logger
-import subprocess
 import tempfile
 import settings
 import requests
@@ -45,171 +43,135 @@ s3_resource = None
 
 @app.route('/pdf', methods=['POST'])
 def generate():
-    global s3_resource
+    session_folder = None
+    try:
+        global s3_resource
 
-    request_data = request.json
+        request_data = request.json
 
-    output = request_data["output"]
-    pages = request_data["pages"]
-    custom_types = request_data["customTypes"]
-    title = request_data["title"]
+        output = request_data["output"]
+        pages = request_data["pages"]
+        custom_types = request_data["customTypes"]
+        title = request_data["title"]
 
-    s3_resource = boto3.resource("s3")
+        s3_resource = boto3.resource("s3")
 
-    session_folder = make_session_folder()
+        session_folder = make_session_folder()
 
-    workfile = make_temp_file(prefix=session_folder + "/")
-    logger.info(f"generate will use workfile {workfile}")
+        workfile = make_temp_file(prefix=session_folder + "/")
+        logger.info(f"generate will use workfile {workfile}")
 
-    # load the cover pdf for the first page
-    cover_page = pages[0]
-    cover_page_filename = make_temp_file(prefix=session_folder + "/")
-    logger.info(f"generate will use cover page filename {cover_page_filename}")
+        # load the cover pdf for the first page
+        cover_page = pages[0]
+        cover_page_filename = make_temp_file(prefix=session_folder + "/")
+        logger.info(f"generate will use cover page filename {cover_page_filename}")
 
-    output_filename = make_temp_file(prefix=session_folder + "/")
-    logger.info(f"generate will use output filename {output_filename}")
+        output_filename = make_temp_file(prefix=session_folder + "/")
+        logger.info(f"generate will use output filename {output_filename}")
 
-    download_success = False
-    if cover_page["type"] == "pdf" and cover_page["method"] == "download":
-        download_success = download(cover_page["input"], cover_page_filename)
-
-    else:
-        logger.error("cover page was invalid")
-        return "cover page was invalid"
-
-    if download_success != True:
-        logger.error("problem during download")
-        return "problem during download"
-
-    # generate pdf from the rest of the pages
-
-    pages_to_download = []
-
-    # skip first page
-    pages_iterator = iter(pages)
-    next(pages_iterator)
-    for page in pages_iterator:
-        page["id"] = str(uuid.uuid4())
-        if page["type"] == "jpg" and page["method"] == "s3":
-            pages_to_download.append(page)
-            logger.debug(f"adding {page['input']} to list of images to download")
-        elif page["type"] in custom_types:
-            # found custom type
-            logger.debug(f"found custom type {page['type']}")
+        download_success = False
+        if cover_page["type"] == "pdf" and cover_page["method"] == "download":
+            download_success = download(cover_page["input"], cover_page_filename)
         else:
-            logger.error(f"unknown page type {page['type']}")
-            return f"unknown page type {page['type']}"
+            logger.error("cover page was invalid")
+            return "cover page was invalid"
 
-    parallel_fetch(pages_to_download, session_folder)
+        if not download_success:
+            logger.error("problem during download")
+            return "problem during download"
 
-    logger.debug("creating pdf")
+        # generate pdf from the rest of the pages
 
-    pdf = Canvas(workfile, pageCompression=1, pagesize=A4)
+        pages_to_download = []
 
-    pages_iterator = iter(pages)
-    next(pages_iterator)
-    for page in pages_iterator:
-        first = False
-        if page in pages_to_download:
-            downloaded_file = session_folder + "/" + page["id"]
-            logger.debug(f"checking file {downloaded_file}")
-            if os.path.exists(downloaded_file):
-                logger.debug("downloaded file exists")
-                if pdf_append_image(pdf, downloaded_file):
-                    logger.debug("appended image")
-                    # all good
-                else:
-                    # problem
-                    logger.debug("problem appending image")
-                    return jsonify({"success": False, "message": "problem with image"})
+        # skip first page
+        pages_iterator = iter(pages)
+        next(pages_iterator)
+        for page in pages_iterator:
+            page["id"] = str(uuid.uuid4())
+            if page["type"] == "jpg" and page["method"] == "s3":
+                pages_to_download.append(page)
+                logger.debug(f"adding {page['input']} to list of images to download")
+            elif page["type"] in custom_types:
+                # found custom type
+                logger.debug(f"found custom type {page['type']}")
             else:
-                # missing
-                pdf_append_custom(pdf, custom_types["missing"])
-                logger.debug("image was missing")
-        elif page["type"] == "redacted":
-            pdf_append_custom(pdf, custom_types["redacted"])
-            logger.debug("image was redacted")
-        pdf.showPage()
+                logger.error(f"unknown page type {page['type']}")
+                return f"unknown page type {page['type']}"
 
-    logger.debug("saving pdf")
-    pdf.save()
+        parallel_fetch(pages_to_download, session_folder)
 
-    # now merge the cover page with the workfile
+        logger.debug("creating pdf")
 
-    logger.debug("merging cover page and generated pdf")
-    merger = PdfFileMerger()
+        pdf = Canvas(workfile, pageCompression=1, pagesize=A4)
 
-    fix_pdf_compliance_version(cover_page_filename, settings.PDF_COMPLIANCE_VERSION)
-    fix_pdf_compliance_version(workfile, settings.PDF_COMPLIANCE_VERSION)
+        pages_iterator = iter(pages)
+        next(pages_iterator)
+        for page in pages_iterator:
+            if page in pages_to_download:
+                downloaded_file = session_folder + "/" + page["id"]
+                logger.debug(f"checking file {downloaded_file}")
+                if os.path.exists(downloaded_file):
+                    logger.debug("downloaded file exists")
+                    if pdf_append_image(pdf, downloaded_file):
+                        logger.debug("appended image")
+                        # all good
+                    else:
+                        # problem
+                        logger.debug("problem appending image")
+                        return jsonify({"success": False, "message": "problem with image"})
+                else:
+                    # missing
+                    pdf_append_custom(pdf, custom_types["missing"])
+                    logger.debug("image was missing")
+            elif page["type"] == "redacted":
+                pdf_append_custom(pdf, custom_types["redacted"])
+                logger.debug("image was redacted")
+            pdf.showPage()
 
-    merge_input1 = open(cover_page_filename, "rb")
-    merge_input2 = open(workfile, "rb")
+        logger.debug("saving pdf")
+        pdf.save()
 
-    merger.append(merge_input1)
-    merger.append(merge_input2)
+        # now merge the cover page with the workfile
 
-    logger.debug(f"writing to {output_filename}")
-    merge_output = open(output_filename, "wb")
-    merger.write(merge_output)
-    merge_output.close()
+        logger.debug("merging cover page and generated pdf")
+        merger = PdfFileMerger()
 
-    write_file_to_s3(
-        filename=output_filename,
-        uri=output,
-        title=title,
-        mime_type="application/pdf")
+        fix_pdf_compliance_version(cover_page_filename, settings.PDF_COMPLIANCE_VERSION)
+        fix_pdf_compliance_version(workfile, settings.PDF_COMPLIANCE_VERSION)
 
-    response_data = {
-        "size": os.stat(output_filename).st_size,
-        "success": True
-    }
+        merge_input1 = open(cover_page_filename, "rb")
+        merge_input2 = open(workfile, "rb")
 
-    return jsonify(response_data)
+        merger.append(merge_input1)
+        merger.append(merge_input2)
+
+        logger.debug(f"writing to {output_filename}")
+        merge_output = open(output_filename, "wb")
+        merger.write(merge_output)
+        merge_output.close()
+
+        success = write_file_to_s3(
+            filename=output_filename,
+            uri=output,
+            title=title,
+            mime_type="application/pdf")
+
+        response_data = {
+            "size": os.stat(output_filename).st_size,
+            "success": success
+        }
+
+        status_code = 200 if success else 500
+
+        return jsonify(response_data), status_code
+    finally:
+        cleanup(session_folder)
 
 
-@app.route('/general-case/', methods=['POST'])
-def generate_general_case():
-    request_data = request.get_json()
-
-    output_method = request_data.get("method")
-    output = request_data.get("output")
-
-    pages = request_data.get("pages")
-
-    custom_types = request_data.get("customTypes")
-
-    # create a plan for the operations
-    # if any pages are a pdf, then we will need to merge results with them
-
-    # e.g. p1 = pdf, p2 = jpg, p3 = jpg
-    # plan = merge(p1, pdf(p2,p3))
-
-    # p1 = jpg, p2 = jpg, p3 = pdf
-    # plan = merge(pdf(p1,p2), p3)
-
-    # p1 = jpg, p2 = pdf, p3 = jpg, p4 = pdf
-    # plan = merge(pdf(p1), p2, pdf(p3), p4)
-
-    # p1 = jpg, p2 = jpg, p3 = jpg
-    # plan = pdf(p1,p2,p3)
-
-    plan = []
-
-    if any(page.type == "pdf" for page in pages):
-        # got pdfs to merge with our generated pages
-        logger.debug("we will need to merge existing pdf with our work")
-
-    workfile = ""
-
-    page_index = 0
-
-    for page in pages:
-        page_index = page_index + 1
-        logger.debug(f"page {page_index}: type={page.type}")
-
-    # if output_method == "s3":
-        # write_file_to_s3(workfile, output, "application/pdf")
-# gotta keep 'em separated
+@app.route('/ping', methods=['GET'])
+def ping():
+    return {"status": "healthy"}
 
 
 def make_temp_file(prefix):
@@ -301,15 +263,17 @@ def write_file_to_s3(filename, uri, title, mime_type):
             bytes = min(chunk_size, source_size - offset)
             with FileChunkIO(filename, "r", offset=offset, bytes=bytes) as file_part:
                 logger.debug(f"uploading part {index}")
-                part_response = s3.upload_part(UploadId=upload_id, Bucket=bucket_name, Key=key, Body=file_part, PartNumber=index + 1)
+                part_response = s3.upload_part(UploadId=upload_id, Bucket=bucket_name, Key=key, Body=file_part,
+                                               PartNumber=index + 1)
                 parts.append({
                     "ETag": part_response["ETag"],
                     "PartNumber": index + 1
                 })
 
-        complete_response = s3.complete_multipart_upload(UploadId=upload_id, Bucket=bucket_name, Key=key, MultipartUpload={
-            "Parts": parts
-        })
+        complete_response = s3.complete_multipart_upload(UploadId=upload_id, Bucket=bucket_name, Key=key,
+                                                         MultipartUpload={
+                                                             "Parts": parts
+                                                         })
 
         if "Location" not in complete_response:
             logger.error("multipart upload failed")
@@ -330,6 +294,12 @@ def make_session_folder():
     except os.error:
         os.mkdir(session_folder)
     return session_folder
+
+
+def cleanup(session_folder):
+    if session_folder:
+        logger.debug(f"Removing folder {session_folder}")
+        shutil.rmtree(session_folder, ignore_errors=False, onerror=None)
 
 
 def parallel_fetch(download_list, base_folder):
@@ -356,7 +326,6 @@ def fetch(base_folder, page):
 
 
 def download_s3(uri, filename):
-
     global s3_resource
 
     logger.debug(f"using s3 strategy to download {uri}")
