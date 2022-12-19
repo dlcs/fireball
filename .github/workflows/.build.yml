@@ -55,5 +55,5 @@ jobs:
           context: .
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          labels: ${{ steps.docker-meta.outputs.labels }}
-          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
