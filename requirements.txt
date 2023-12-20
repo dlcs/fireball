@@ -8,3 +8,4 @@ futures==2.2.0
 requests==2.25.0
 filechunkio==1.8
 logzero==1.6.3
+Werkzeug==2.2.2

@@ -4,6 +4,8 @@ import shutil
 
 import logzero
 import logging
+
+from PyPDF2.errors import PdfStreamError
 from logzero import logger
 import tempfile
 import settings
@@ -164,9 +166,24 @@ def generate():
 
         status_code = 200 if success else 500
 
-        return jsonify(response_data), status_code
+    except PdfStreamError as e:
+        logger.exception(e)
+        response_data = {
+            "success": False,
+            "error": f"failed to understand pdf document - {e}"
+        }
+        status_code = 400
+    except Exception as e:
+        logger.exception(e)
+        response_data = {
+            "success": False,
+            "error": e
+        }
+        status_code = 500
     finally:
         cleanup(session_folder)
+
+    return jsonify(response_data), status_code
 
 
 @app.route('/ping', methods=['GET'])
