@@ -1,8 +1,7 @@
 """Settings for Fireball"""
 import os
-import distutils.util
 
-DEBUG = bool(distutils.util.strtobool(os.getenv("DEBUG", "True")))
+DEBUG = os.getenv("DEBUG", "True").lower() in ("y", "yes", "t", "true", "on", "1")  # distutils removed in py3.12
 
 WORK_FOLDER = os.getenv('FIREBALL_WORK_FOLDER', '/tmp')
 DOWNLOAD_POOL_SIZE = int(os.getenv('FIREBALL_DOWNLOAD_POOL_SIZE', '50'))
