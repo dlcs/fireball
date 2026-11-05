@@ -338,7 +338,7 @@ def download_s3(uri, filename):
 
 def download(url, filename):
     try:
-        download_request = requests.get(url)
+        download_request = requests.get(url, headers={"User-Agent": "Fireball/1.0(+https://github.com/dlcs/fireball)"})
         download_request.raise_for_status()
         with open(filename, 'wb') as file:
             file.write(download_request.content)
