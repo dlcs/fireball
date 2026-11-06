@@ -1,11 +1,10 @@
 import os
-import math
 import shutil
 
 import logzero
 import logging
 
-from PyPDF2.errors import PdfStreamError
+from pypdf.errors import PdfStreamError
 from logzero import logger
 import tempfile
 import settings
@@ -17,6 +16,7 @@ import re
 from flask import Flask, request, jsonify
 
 import boto3
+from boto3.s3.transfer import TransferConfig
 
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -25,11 +25,10 @@ from reportlab.pdfgen.canvas import Canvas
 from reportlab.rl_config import defaultPageSize
 from reportlab.lib.pagesizes import A4
 
-from PyPDF2 import PdfFileMerger
+from pypdf import PdfWriter
 
 from PIL import Image
 
-from filechunkio import FileChunkIO
 from decimal import Context, ROUND_HALF_EVEN
 import decimal
 
@@ -137,7 +136,7 @@ def generate():
         # now merge the cover page with the workfile
 
         logger.debug("merging cover page and generated pdf")
-        merger = PdfFileMerger()
+        merger = PdfWriter()
 
         fix_pdf_compliance_version(cover_page_filename, settings.PDF_COMPLIANCE_VERSION)
         fix_pdf_compliance_version(workfile, settings.PDF_COMPLIANCE_VERSION)
@@ -263,38 +262,14 @@ def write_file_to_s3(filename, uri, title, mime_type):
     try:
         logger.debug(f"bucket = {bucket_name}, key = {key}")
 
-        multipart_session = s3.create_multipart_upload(
-            Bucket=bucket_name,
-            Key=key,
-            ContentType=mime_type,
-            ContentDisposition='attachment; filename="' + title + '"')
-        upload_id = multipart_session["UploadId"]
-        chunk_size = 52428800
-        source_size = os.stat(filename).st_size
-        chunks_count = int(math.ceil(source_size / float(chunk_size)))
-
-        parts = []
-
-        for index in range(chunks_count):
-            offset = index * chunk_size
-            bytes = min(chunk_size, source_size - offset)
-            with FileChunkIO(filename, "r", offset=offset, bytes=bytes) as file_part:
-                logger.debug(f"uploading part {index}")
-                part_response = s3.upload_part(UploadId=upload_id, Bucket=bucket_name, Key=key, Body=file_part,
-                                               PartNumber=index + 1)
-                parts.append({
-                    "ETag": part_response["ETag"],
-                    "PartNumber": index + 1
-                })
-
-        complete_response = s3.complete_multipart_upload(UploadId=upload_id, Bucket=bucket_name, Key=key,
-                                                         MultipartUpload={
-                                                             "Parts": parts
-                                                         })
-
-        if "Location" not in complete_response:
-            logger.error("multipart upload failed")
-            return False
+        # upload_file does multipart (and aborts on failure) above the threshold
+        s3.upload_file(
+            filename, bucket_name, key,
+            ExtraArgs={
+                "ContentType": mime_type,
+                "ContentDisposition": f'attachment; filename="{title}"',
+            },
+            Config=TransferConfig(multipart_chunksize=52428800))
 
         logger.debug("upload done")
 
@@ -363,7 +338,7 @@ def download_s3(uri, filename):
 
 def download(url, filename):
     try:
-        download_request = requests.get(url)
+        download_request = requests.get(url, headers={"User-Agent": "Fireball/1.0(+https://github.com/dlcs/fireball)"})
         download_request.raise_for_status()
         with open(filename, 'wb') as file:
             file.write(download_request.content)

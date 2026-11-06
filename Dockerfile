@@ -1,4 +1,4 @@
-FROM python:3.10-alpine
+FROM python:3.13-alpine3.24
 
 RUN apk add --update --no-cache --virtual=run-deps \
   jpeg-dev \
