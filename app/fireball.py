@@ -24,6 +24,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.rl_config import defaultPageSize
 from reportlab.lib.pagesizes import A4
+from reportlab import rl_config
 
 from pypdf import PdfWriter
 
@@ -33,6 +34,8 @@ from decimal import Context, ROUND_HALF_EVEN
 import decimal
 
 app = Flask(__name__)
+
+rl_config.useA85 = 1 if settings.USE_A85 else 0
 
 if settings.DEBUG:
     logzero.loglevel(logging.DEBUG)
@@ -151,6 +154,7 @@ def generate():
         merge_output = open(output_filename, "wb")
         merger.write(merge_output)
         merge_output.close()
+        logger.debug(f"merged pdf written to {output_filename}")
 
         success = write_file_to_s3(
             filename=output_filename,

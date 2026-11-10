@@ -19,6 +19,7 @@ The docker container accepts the following environment variables:
 * `DEBUG` - if `True` then debug logging is enabled, else Info logging is enabled. Default: `TRUE`.
 * `FIREBALL_WORK_FOLDER` - Working URL for storing working files. Default: `/tmp`.
 * `FIREBALL_DOWNLOAD_POOL_SIZE` - The number of workers to use for downloading resources. Default: `50`.
+* `FIREBALL_USE_A85` - ASCII85-encode embedded images (slower, ~25% larger PDFs). Default: `False`.
 
 ## Sample Payload
 
