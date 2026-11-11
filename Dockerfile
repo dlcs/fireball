@@ -10,7 +10,7 @@ RUN apk add --update --no-cache --virtual=run-deps \
 
 WORKDIR /opt/fireball
 
-CMD [ "uwsgi", "--plugins", "http,python3", "--http", "0.0.0.0:80", "--module", "wsgi" ]
+CMD [ "uwsgi", "--master", "--http", "0.0.0.0:80", "--http-timeout", "900", "--module", "wsgi", "--processes", "4" ]
 
 EXPOSE 80
 COPY requirements.txt /opt/fireball/requirements.txt
